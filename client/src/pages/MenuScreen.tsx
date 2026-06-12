@@ -234,8 +234,7 @@ export default function MenuScreen() {
             e.currentTarget.style.background = '#0a0a0a'
             e.currentTarget.style.boxShadow = 'none'
           }}
-        >
-> INITIALIZE SEQUENCE —
+        > INITIALIZE SEQUENCE —
         </button>
 
         <div style={styles.smallText}>
