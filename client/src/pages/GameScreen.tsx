@@ -130,10 +130,25 @@ export default function GameScreen() {
         alignItems: 'center',
       }}
     >
-      <canvas ref={canvasRef} aria-hidden="true" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 0, pointerEvents: 'none', opacity: 0.9 }} />
+      <canvas
+        ref={canvasRef}
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          zIndex: 0,
+          pointerEvents: 'none',
+          opacity: 0.9,
+        }}
+      />
+
       <style>
-        {`@keyframes solsticeBlink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }\n@keyframes solsticeScan { 0% { transform: translateY(0px); } 100% { transform: translateY(40px); } }`}
+        {`@keyframes solsticeBlink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+@keyframes solsticeScan { 0% { transform: translateY(0px); } 100% { transform: translateY(40px); } }`}
       </style>
+
       <div
         style={{
           position: 'absolute',
@@ -144,6 +159,7 @@ export default function GameScreen() {
             'radial-gradient(circle at center, rgba(0, 255, 65, 0.18) 0%, rgba(0, 255, 65, 0.10) 22%, rgba(0, 255, 65, 0.05) 45%, rgba(10, 10, 10, 0) 70%)',
         }}
       />
+
       <div
         style={{
           position: 'absolute',
@@ -166,7 +182,6 @@ export default function GameScreen() {
           gap: '1rem',
         }}
       >
-        {/* Top bar */}
         <div
           style={{
             ...glass,
@@ -188,6 +203,7 @@ export default function GameScreen() {
           >
             ARIA // {playerName}
           </div>
+
           <div
             style={{
               textAlign: 'center',
@@ -200,6 +216,7 @@ export default function GameScreen() {
           >
             {String(state.currentPhase).toUpperCase()}
           </div>
+
           <div
             style={{
               textAlign: 'right',
@@ -212,7 +229,6 @@ export default function GameScreen() {
           </div>
         </div>
 
-        {/* Panels */}
         <div
           style={{
             display: 'grid',
@@ -220,7 +236,6 @@ export default function GameScreen() {
             gap: '1rem',
           }}
         >
-          {/* Left: Inbox */}
           <div style={{ ...glass, padding: '1.2rem', boxSizing: 'border-box' }}>
             <div
               style={{
@@ -231,7 +246,6 @@ export default function GameScreen() {
               }}
             >
               {'>'} INBOX
-
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
@@ -262,7 +276,6 @@ export default function GameScreen() {
             </div>
           </div>
 
-          {/* Right: Active Transmission */}
           <div style={{ ...glass, padding: '1.2rem', boxSizing: 'border-box' }}>
             <div
               style={{
@@ -272,7 +285,7 @@ export default function GameScreen() {
                 marginBottom: '0.9rem',
               }}
             >
-              > ACTIVE TRANSMISSION
+              {'>'} ACTIVE TRANSMISSION
             </div>
 
             <div
