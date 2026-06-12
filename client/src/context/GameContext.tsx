@@ -1,0 +1,134 @@
+import React, { createContext, useContext, useReducer } from 'react'
+import type { ReactNode } from 'react'
+
+export type GamePhase = 'dawn' | 'morning' | 'noon' | 'dusk' | 'night'
+export type EndingType = 'A' | 'B' | 'C' | null
+export type GameScreen = 'boot' | 'menu' | 'game' | 'ending'
+
+export interface GameState {
+  sessionId: string | null
+  playerName: string | null
+  gameTime: number
+  currentPhase: GamePhase
+  isComplete: boolean
+  ending: EndingType
+  screen: GameScreen
+  flags: Record<string, string>
+  puzzlesCompleted: number[]
+}
+
+type GameAction =
+  | { type: 'SET_SESSION'; payload: { sessionId: string; playerName: string } }
+  | { type: 'ADVANCE_TIME'; payload: number }
+  | { type: 'SET_PHASE'; payload: GamePhase }
+  | { type: 'SET_FLAG'; payload: { key: string; value: string } }
+  | { type: 'COMPLETE_PUZZLE'; payload: number }
+  | { type: 'SET_SCREEN'; payload: GameScreen }
+  | { type: 'SET_ENDING'; payload: EndingType }
+  | { type: 'RESET' }
+
+const initialState: GameState = {
+  sessionId: null,
+  playerName: null,
+  gameTime: 0,
+  currentPhase: 'dawn',
+  isComplete: false,
+  ending: null,
+  screen: 'boot',
+  flags: {},
+  puzzlesCompleted: [],
+}
+
+function phaseFromTime(minutes: number): GamePhase {
+  if (minutes >= 480) return 'night'
+  if (minutes >= 360) return 'dusk'
+  if (minutes >= 240) return 'noon'
+  if (minutes >= 120) return 'morning'
+  return 'dawn'
+}
+
+export function gameReducer(state: GameState, action: GameAction): GameState {
+  switch (action.type) {
+    case 'SET_SESSION': {
+      return {
+        ...state,
+        sessionId: action.payload.sessionId,
+        playerName: action.payload.playerName,
+      }
+    }
+    case 'ADVANCE_TIME': {
+      const newGameTime = state.gameTime + action.payload
+      return {
+        ...state,
+        gameTime: newGameTime,
+        currentPhase: phaseFromTime(newGameTime),
+      }
+    }
+    case 'SET_PHASE': {
+      return {
+        ...state,
+        currentPhase: action.payload,
+      }
+    }
+    case 'SET_FLAG': {
+      return {
+        ...state,
+        flags: {
+          ...state.flags,
+          [action.payload.key]: action.payload.value,
+        },
+      }
+    }
+    case 'COMPLETE_PUZZLE': {
+      const puzzleId = action.payload
+      const alreadyCompleted = state.puzzlesCompleted.includes(puzzleId)
+      const puzzlesCompleted = alreadyCompleted
+        ? state.puzzlesCompleted
+        : [...state.puzzlesCompleted, puzzleId]
+
+      return {
+        ...state,
+        puzzlesCompleted,
+      }
+    }
+    case 'SET_SCREEN': {
+      return {
+        ...state,
+        screen: action.payload,
+      }
+    }
+    case 'SET_ENDING': {
+      const ending = action.payload
+      return {
+        ...state,
+        ending,
+        isComplete: ending !== null,
+      }
+    }
+    case 'RESET': {
+      return { ...initialState }
+    }
+    default: {
+      return state
+    }
+  }
+}
+
+const GameContext = createContext<{
+  state: GameState
+  dispatch: React.Dispatch<GameAction>
+} | null>(null)
+
+export function GameProvider({ children }: { children: ReactNode }) {
+  const [state, dispatch] = useReducer(gameReducer, initialState)
+  return <GameContext.Provider value={{ state, dispatch }}>{children}</GameContext.Provider>
+}
+
+export function useGame() {
+  const ctx = useContext(GameContext)
+  if (!ctx) throw new Error('useGame must be used within GameProvider')
+  return ctx
+}
+
+
+
