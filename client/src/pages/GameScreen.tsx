@@ -3,9 +3,11 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useGame } from '../context/GameContext'
 import { puzzles } from '../utils/puzzles'
 import PuzzlePanel from '../components/PuzzlePanel'
+import { evaluateEnding } from '../utils/endingLogic'
 
 export default function GameScreen() {
-  const { state } = useGame()
+  const { dispatch, state } = useGame()
+
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const rafRef = useRef<number | null>(null)
@@ -298,8 +300,20 @@ export default function GameScreen() {
             >
               <PuzzlePanel
                 puzzle={activePuzzle}
-                onSolved={() => console.log('puzzle solved')}
+                onSolved={() => {
+                  const updatedCompleted = [...state.puzzlesCompleted]
+                  const activePuzzleId = activePuzzle.id
+                  if (!updatedCompleted.includes(activePuzzleId)) {
+                    updatedCompleted.push(activePuzzleId)
+                  }
+                  if (updatedCompleted.length >= 5) {
+                    const ending = evaluateEnding(updatedCompleted, state.flags, state.gameTime)
+                    dispatch({ type: 'SET_ENDING', payload: ending })
+                    dispatch({ type: 'SET_SCREEN', payload: 'ending' })
+                  }
+                }}
               />
+
               <div style={{ marginTop: '0.75rem' }}>
                 <span style={cursorStyle} aria-hidden="true">
                   ▋
