@@ -26,7 +26,8 @@ export async function generateHint(
     })
 
     return completion.choices[0]?.message?.content ?? 'The pattern exists. Look deeper.'
-  } catch {
+  } catch (err) {
+    console.error('GROQ ERROR:', err)
     return 'The pattern exists. Look deeper.'
   }
 }
@@ -55,7 +56,8 @@ export async function generateCharacterResponse(
     })
 
     return completion.choices[0]?.message?.content ?? "I'm watching your progress, ARIA."
-  } catch {
+  } catch (err) {
+    console.error('GROQ ERROR:', err)
     return "I'm watching your progress, ARIA."
   }
 }
