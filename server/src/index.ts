@@ -3,11 +3,14 @@ import express from 'express';
 import cors from 'cors';
 
 import pool from './db';
+import { aiRouter } from './routes/ai';
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+app.use('/api/ai', aiRouter);
 
 app.get('/api/health', (_req, res) => {
   res.json({
@@ -34,4 +37,5 @@ app.listen(port, () => {
       console.error('DATABASE -- Connection failed', err);
     });
 });
+
 
