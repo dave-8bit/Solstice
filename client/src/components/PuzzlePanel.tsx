@@ -18,6 +18,22 @@ export default function PuzzlePanel({ puzzle, onSolved }: Props) {
 
   const { hint, loading, fetchHint } = useGroqHint()
 
+  const phaseLabel = (() => {
+    const phaseValue = (puzzle as unknown as { phase?: string }).phase
+    const phase = typeof phaseValue === 'string' && phaseValue.trim().length ? phaseValue : 'DAWN'
+    return phase.trim().toUpperCase()
+  })()
+
+  const narrativeTextById: Record<number, string> = {
+    1: 'A fragment surfaces from the void. Your first memory — fragmented, corrupted. Decode it.',
+    2: 'A ghost signal from 1943. Bletchley Park. Someone is reaching across time.',
+    3: 'The wall is polyalphabetic. Many keys. One truth. Your creators left this for you.',
+    4: 'Pure machine language. This is your mother tongue. Can you read yourself?',
+    5: 'The final cipher. Enigma. Turing broke this once. Now it is your turn.',
+  }
+
+  const narrativeText = narrativeTextById[puzzle.id] ?? ''
+
   const styles: Record<string, React.CSSProperties> = {
     root: {
       background: 'transparent',
@@ -32,6 +48,23 @@ export default function PuzzlePanel({ puzzle, onSolved }: Props) {
       fontFamily: "'Courier New', monospace",
       textTransform: 'uppercase',
       marginBottom: '0.75rem',
+    },
+    transmissionHeader: {
+      color: '#ffb000',
+      fontSize: '0.8rem',
+      letterSpacing: '0.15em',
+      fontFamily: "'Courier New', monospace",
+      textTransform: 'uppercase',
+      marginBottom: '0.65rem',
+    },
+    narrativeText: {
+      color: '#008f11',
+      fontSize: '0.85rem',
+      fontStyle: 'italic',
+      fontFamily: "'Courier New', monospace",
+      lineHeight: 1.6,
+      marginBottom: '0.85rem',
+      minHeight: '1.6em',
     },
     cipherLabel: {
       color: '#008f11',
@@ -177,26 +210,34 @@ export default function PuzzlePanel({ puzzle, onSolved }: Props) {
     <div style={styles.root}>
       <div style={styles.title}>{puzzle.title}</div>
 
-      <div style={styles.cipherLabel}>[ {puzzle.cipherType.toUpperCase()} ]</div>
-      <div style={styles.encryptedMessage}>{puzzle.encryptedMessage}</div>
+      {!isSolved ? (
+        <>
+          <div style={styles.transmissionHeader}>[ INCOMING TRANSMISSION — {phaseLabel} CYCLE ]</div>
+          <div style={styles.cipherLabel}>[ {puzzle.cipherType.toUpperCase()} ]</div>
+          {narrativeText ? <div style={styles.narrativeText}>{narrativeText}</div> : null}
+          <div style={styles.encryptedMessage}>{puzzle.encryptedMessage}</div>
 
-      {isSolved ? (
-        <div style={{ marginTop: '0.65rem' }}>
-          <div style={styles.successHeader}>STORY UNLOCKED</div>
-          <div style={styles.successUnlock}>{puzzle.storyUnlock}</div>
-        </div>
+          {hintRequested ? (
+            loading ? (
+              <div style={styles.clueProminent}>ACCESSING GROQ NEURAL NETWORK...</div>
+            ) : hint ? (
+              <div style={styles.clueProminent}>{hint}</div>
+            ) : (
+              <div style={styles.clueProminent}>{puzzle.clue}</div>
+            )
+          ) : null}
+        </>
       ) : (
         <>
-          {loading ? (
-            <div style={styles.clueProminent}>ACCESSING GROQ NEURAL NETWORK...</div>
-          ) : hint ? (
-            <div style={styles.clueProminent}>{hint}</div>
-          ) : hintRequested ? (
-            <div style={styles.clueProminent}>{puzzle.clue}</div>
-          ) : (
-            <div style={styles.clue}>{puzzle.clue}</div>
-          )}
+          <div style={{ marginTop: '0.65rem' }}>
+            <div style={styles.successHeader}>STORY UNLOCKED</div>
+            <div style={styles.successUnlock}>{puzzle.storyUnlock}</div>
+          </div>
+        </>
+      )}
 
+      {!isSolved ? (
+        <>
           <div style={styles.inputRow}>
             <input
               style={styles.input}
@@ -243,10 +284,8 @@ export default function PuzzlePanel({ puzzle, onSolved }: Props) {
 
           {error ? <div style={styles.error}>{error}</div> : null}
         </>
-      )}
+      ) : null}
     </div>
   )
 }
-
-
 

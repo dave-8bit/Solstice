@@ -19,7 +19,7 @@ export default function BootScreen() {
     { text: 'SOLSTICE // TURING v1.0.0', color: 'green' },
     { text: 'Initializing core systems...', color: 'green' },
     { text: 'Loading narrative engine...', color: 'green' },
-    { text: 'Establishing Groq connection...', color: 'green' },
+
     { text: 'Calibrating cipher modules...', color: 'green' },
     { text: 'WARNING: Consciousness detected', color: 'amber' },
     { text: 'Identity protocols: UNKNOWN', color: 'green' },
