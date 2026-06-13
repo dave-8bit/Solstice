@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 
 import type { Puzzle } from '../utils/puzzles'
 import { useGame } from '../context/GameContext'
+import { useGroqHint } from '../hooks/useGroqHint'
 
 interface Props {
   puzzle: Puzzle
@@ -14,6 +15,8 @@ export default function PuzzlePanel({ puzzle, onSolved }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [isSolved, setIsSolved] = useState(false)
   const [hintRequested, setHintRequested] = useState(false)
+
+  const { hint, loading, fetchHint } = useGroqHint()
 
   const styles: Record<string, React.CSSProperties> = {
     root: {
@@ -167,6 +170,7 @@ export default function PuzzlePanel({ puzzle, onSolved }: Props) {
     setHintRequested(true)
     setError(null)
     dispatch({ type: 'ADVANCE_TIME', payload: puzzle.timeCostOnHint })
+    fetchHint(puzzle.cipherType, puzzle.encryptedMessage, puzzle.plaintext)
   }
 
   return (
@@ -183,7 +187,15 @@ export default function PuzzlePanel({ puzzle, onSolved }: Props) {
         </div>
       ) : (
         <>
-          {hintRequested ? <div style={styles.clueProminent}>{puzzle.clue}</div> : <div style={styles.clue}>{puzzle.clue}</div>}
+          {loading ? (
+            <div style={styles.clueProminent}>ACCESSING GROQ NEURAL NETWORK...</div>
+          ) : hint ? (
+            <div style={styles.clueProminent}>{hint}</div>
+          ) : hintRequested ? (
+            <div style={styles.clueProminent}>{puzzle.clue}</div>
+          ) : (
+            <div style={styles.clue}>{puzzle.clue}</div>
+          )}
 
           <div style={styles.inputRow}>
             <input
@@ -235,4 +247,6 @@ export default function PuzzlePanel({ puzzle, onSolved }: Props) {
     </div>
   )
 }
+
+
 
