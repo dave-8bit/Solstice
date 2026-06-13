@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 
 import { useGame } from '../context/GameContext'
+import { puzzles } from '../utils/puzzles'
+import PuzzlePanel from '../components/PuzzlePanel'
 
 export default function GameScreen() {
   const { state } = useGame()
@@ -91,15 +93,9 @@ export default function GameScreen() {
     }
   }, [])
 
-  const inboxMessages = [
-    'SUBCHANNEL 3: CIPHERS UNSEALED',
-    'SUBCHANNEL 1: SIGNAL STABILIZED',
-    'SUBCHANNEL 7: MEMORY FRAGMENTS VERIFIED',
-  ]
+  const [activePuzzleId, setActivePuzzleId] = useState<number>(puzzles[0]?.id ?? 1)
 
-  const [activeMessageIdx, setActiveMessageIdx] = useState<number>(0)
-
-  const activeMessage = inboxMessages[Math.min(activeMessageIdx, inboxMessages.length - 1)]
+  const activePuzzle = puzzles.find((p) => p.id === activePuzzleId) ?? puzzles[0]
 
   const cursorStyle: React.CSSProperties = {
     color: '#ffb000',
@@ -249,13 +245,13 @@ export default function GameScreen() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-              {inboxMessages.map((m, idx) => {
-                const isActive = idx === activeMessageIdx
+              {puzzles.map((p) => {
+                const isActive = p.id === activePuzzleId
                 return (
                   <button
-                    key={m}
+                    key={p.id}
                     type="button"
-                    onClick={() => setActiveMessageIdx(idx)}
+                    onClick={() => setActivePuzzleId(p.id)}
                     style={{
                       width: '100%',
                       textAlign: 'left',
@@ -269,7 +265,10 @@ export default function GameScreen() {
                       cursor: 'pointer',
                     }}
                   >
-                    {m}
+                    <div style={{ color: '#00ff41' }}>{p.title}</div>
+                    <div style={{ color: '#008f11', fontSize: '0.85rem', fontStyle: 'italic', marginTop: '0.15rem' }}>
+                      [ {p.phase.toUpperCase()} ]
+                    </div>
                   </button>
                 )
               })}
@@ -297,9 +296,11 @@ export default function GameScreen() {
                 minHeight: '6rem',
               }}
             >
-              {activeMessage}
+              <PuzzlePanel
+                puzzle={activePuzzle}
+                onSolved={() => console.log('puzzle solved')}
+              />
               <div style={{ marginTop: '0.75rem' }}>
-                AWAITING DECRYPTION...
                 <span style={cursorStyle} aria-hidden="true">
                   ▋
                 </span>
@@ -311,4 +312,5 @@ export default function GameScreen() {
     </div>
   )
 }
+
 
