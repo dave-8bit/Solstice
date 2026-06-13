@@ -9,7 +9,7 @@ export async function generateHint(
 ): Promise<string> {
   try {
     const completion = await groq.chat.completions.create({
-      model: 'llama3-70b-8192',
+      model: 'llama-3.3-70b-versatile',
       max_tokens: 120,
       temperature: 0.7,
       messages: [
@@ -40,7 +40,7 @@ export async function generateCharacterResponse(
 ): Promise<string> {
   try {
     const completion = await groq.chat.completions.create({
-      model: 'llama3-70b-8192',
+      model: 'llama-3.3-70b-versatile',
       max_tokens: 150,
       temperature: 0.8,
       messages: [
