@@ -15,7 +15,9 @@ export interface GameState {
   screen: GameScreen
   flags: Record<string, string>
   puzzlesCompleted: number[]
+  solsticeDecay: number
 }
+
 
 type GameAction =
   | { type: 'SET_SESSION'; payload: { sessionId: string; playerName: string } }
@@ -25,7 +27,11 @@ type GameAction =
   | { type: 'COMPLETE_PUZZLE'; payload: number }
   | { type: 'SET_SCREEN'; payload: GameScreen }
   | { type: 'SET_ENDING'; payload: EndingType }
+  | { type: 'INCREASE_DECAY'; payload?: number }
+  | { type: 'SET_DECAY'; payload?: number }
   | { type: 'RESET' }
+
+
 
 const initialState: GameState = {
   sessionId: null,
@@ -37,7 +43,9 @@ const initialState: GameState = {
   screen: 'boot',
   flags: {},
   puzzlesCompleted: [],
+  solsticeDecay: 0,
 }
+
 
 function phaseFromTime(minutes: number): GamePhase {
   if (minutes >= 480) return 'night'
@@ -47,8 +55,14 @@ function phaseFromTime(minutes: number): GamePhase {
   return 'dawn'
 }
 
+function clampDecay(value: number): number {
+  const v = Number.isFinite(value) ? value : 0
+  return Math.max(0, Math.min(100, v))
+}
+
 export function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
+
     case 'SET_SESSION': {
       return {
         ...state,
@@ -105,9 +119,23 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         isComplete: ending !== null,
       }
     }
+    case 'INCREASE_DECAY': {
+      const inc = clampDecay(action.payload ?? 0)
+      return {
+        ...state,
+        solsticeDecay: clampDecay(state.solsticeDecay + inc),
+      }
+    }
+    case 'SET_DECAY': {
+      return {
+        ...state,
+        solsticeDecay: clampDecay(action.payload ?? 0),
+      }
+    }
     case 'RESET': {
       return { ...initialState }
     }
+
     default: {
       return state
     }

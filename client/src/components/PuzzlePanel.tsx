@@ -34,6 +34,10 @@ export default function PuzzlePanel({ puzzle, onSolved }: Props) {
 
   const narrativeText = narrativeTextById[puzzle.id] ?? ''
 
+  const shouldShowNarrativeText = isSolved
+
+
+
   const styles: Record<string, React.CSSProperties> = {
     root: {
       background: 'transparent',
@@ -214,7 +218,6 @@ export default function PuzzlePanel({ puzzle, onSolved }: Props) {
         <>
           <div style={styles.transmissionHeader}>[ INCOMING TRANSMISSION — {phaseLabel} CYCLE ]</div>
           <div style={styles.cipherLabel}>[ {puzzle.cipherType.toUpperCase()} ]</div>
-          {narrativeText ? <div style={styles.narrativeText}>{narrativeText}</div> : null}
           <div style={styles.encryptedMessage}>{puzzle.encryptedMessage}</div>
 
           {hintRequested ? (
@@ -223,16 +226,22 @@ export default function PuzzlePanel({ puzzle, onSolved }: Props) {
             ) : hint ? (
               <div style={styles.clueProminent}>{hint}</div>
             ) : (
-              <div style={styles.clueProminent}>{puzzle.clue}</div>
+              <div style={styles.clueProminent}>NEURAL LINK UNSTABLE — CONSULT INTERNAL MEMORY</div>
             )
           ) : null}
+
         </>
       ) : (
         <>
           <div style={{ marginTop: '0.65rem' }}>
             <div style={styles.successHeader}>STORY UNLOCKED</div>
             <div style={styles.successUnlock}>{puzzle.storyUnlock}</div>
+
+            {shouldShowNarrativeText ? (
+              <div style={styles.narrativeText}>{narrativeText}</div>
+            ) : null}
           </div>
+
         </>
       )}
 
