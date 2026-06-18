@@ -1,19 +1,18 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react'
 
-import type { Puzzle } from '../utils/puzzles';
-import { useGame } from '../context/GameContext';
-import { useGroqHint } from '../hooks/useGroqHint';
-import { getARIAStateFromDecay } from '../utils/ariaState';
-
+import type { Puzzle } from '../utils/puzzles'
+import { useGame } from '../context/GameContext'
+import { useGroqHint } from '../hooks/useGroqHint'
+import { getNeuralStabilityPercent } from '../utils/ariaStabilityPercent'
 
 interface Props {
-
   puzzle: Puzzle
   onSolved: () => void
 }
 
 export default function PuzzlePanel({ puzzle, onSolved }: Props) {
-  const { dispatch } = useGame()
+  const { dispatch, state } = useGame()
+
   const [answer, setAnswer] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isSolved, setIsSolved] = useState(false)
@@ -21,6 +20,7 @@ export default function PuzzlePanel({ puzzle, onSolved }: Props) {
 
   const { hint, loading, fetchHint, error: hintError } = useGroqHint()
 
+  const displayedHint: string | null = hintRequested ? (hintError ? null : hint) : null
 
   const phaseLabel = (() => {
     const phaseValue = (puzzle as unknown as { phase?: string }).phase
@@ -37,8 +37,9 @@ export default function PuzzlePanel({ puzzle, onSolved }: Props) {
   }
 
   const narrativeText = narrativeTextById[puzzle.id] ?? ''
-
   const shouldShowNarrativeText = isSolved
+
+  const ariaStabilityPercent = useMemo(() => getNeuralStabilityPercent(state.solsticeDecay), [state.solsticeDecay])
 
   const styles: Record<string, React.CSSProperties> = {
     root: {
@@ -87,15 +88,6 @@ export default function PuzzlePanel({ puzzle, onSolved }: Props) {
       textShadow: '0 0 10px rgba(0, 255, 65, 0.35)',
       marginBottom: '0.85rem',
       wordBreak: 'break-word',
-    },
-    clue: {
-      color: '#008f11',
-      fontSize: '0.85rem',
-      fontStyle: 'italic',
-      fontFamily: "'Courier New', monospace",
-      marginBottom: '0.85rem',
-      lineHeight: 1.4,
-      minHeight: '1.3em',
     },
     clueProminent: {
       color: '#ffb000',
@@ -231,8 +223,13 @@ export default function PuzzlePanel({ puzzle, onSolved }: Props) {
               <div style={styles.clueProminent}>ACCESSING GROQ NEURAL NETWORK...</div>
             ) : hintError ? (
               <div style={styles.clueProminent}>{hintError}</div>
-            ) : hint !== null ? (
-              <div style={styles.clueProminent}>{hint}</div>
+            ) : displayedHint ? (
+              <div style={styles.clueProminent}>
+                <div style={{ fontSize: '0.75rem', color: 'rgba(255,176,0,0.95)', marginBottom: '0.35rem' }}>
+                  NEURAL STABILITY: {ariaStabilityPercent}%
+                </div>
+                {displayedHint}
+              </div>
             ) : null
           ) : null}
         </>
@@ -242,11 +239,8 @@ export default function PuzzlePanel({ puzzle, onSolved }: Props) {
             <div style={styles.successHeader}>STORY UNLOCKED</div>
             <div style={styles.successUnlock}>{puzzle.storyUnlock}</div>
 
-            {shouldShowNarrativeText ? (
-              <div style={styles.narrativeText}>{narrativeText}</div>
-            ) : null}
+            {shouldShowNarrativeText ? <div style={styles.narrativeText}>{narrativeText}</div> : null}
           </div>
-
         </>
       )}
 
@@ -263,35 +257,11 @@ export default function PuzzlePanel({ puzzle, onSolved }: Props) {
           </div>
 
           <div style={styles.buttonsRow}>
-            <button
-              type="button"
-              style={styles.button}
-              onClick={onSubmit}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(0,255,65,0.1)'
-                e.currentTarget.style.boxShadow = '0 0 20px rgba(0,255,65,0.15)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = '#0a0a0a'
-                e.currentTarget.style.boxShadow = 'none'
-              }}
-            >
+            <button type="button" style={styles.button} onClick={onSubmit}>
               SUBMIT —
             </button>
 
-            <button
-              type="button"
-              style={styles.buttonSecondary}
-              onClick={onRequestHint}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(255,176,0,0.10)'
-                e.currentTarget.style.boxShadow = '0 0 20px rgba(255,176,0,0.15)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = '#0a0a0a'
-                e.currentTarget.style.boxShadow = 'none'
-              }}
-            >
+            <button type="button" style={styles.buttonSecondary} onClick={onRequestHint}>
               REQUEST HINT
             </button>
           </div>
