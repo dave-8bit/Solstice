@@ -6,8 +6,11 @@ export function useGroqHint() {
   const [error, setError] = useState<string | null>(null);
 
   const fetchHint = useCallback(
-    async (cipherType: string, encryptedMessage: string, plaintext: string) => {
+    async (cipherType: string, encryptedMessage: string, plaintext: string, solsticeDecay: number) => {
+      const safeDecay = Number.isFinite(solsticeDecay) ? solsticeDecay : 0
+
       setLoading(true);
+
       setError(null);
 
       try {
@@ -16,8 +19,10 @@ export function useGroqHint() {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ cipherType, encryptedMessage, plaintext }),
+          body: JSON.stringify({ cipherType, encryptedMessage, plaintext, solsticeDecay: safeDecay }),
+
         });
+
 
         if (!res.ok) {
           throw new Error('Request failed');

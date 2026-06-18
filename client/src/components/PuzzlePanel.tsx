@@ -204,14 +204,17 @@ export default function PuzzlePanel({ puzzle, onSolved }: Props) {
   }
 
 
+
   function onRequestHint() {
     if (isSolved) return
     setHintRequested(true)
     setError(null)
     dispatch({ type: 'ADVANCE_TIME', payload: puzzle.timeCostOnHint })
     dispatch({ type: 'INCREASE_DECAY', payload: puzzle.timeCostOnHint * 0.3 })
-    fetchHint(puzzle.cipherType, puzzle.encryptedMessage, puzzle.plaintext)
+    fetchHint(puzzle.cipherType, puzzle.encryptedMessage, puzzle.plaintext, 0)
+
   }
+
 
 
   return (

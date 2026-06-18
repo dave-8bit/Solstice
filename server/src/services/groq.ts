@@ -5,9 +5,13 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
 export async function generateHint(
   cipherType: string,
   encryptedMessage: string,
-  plaintext: string
+  plaintext: string,
+  solsticeDecay: number
 ): Promise<string> {
+
   try {
+    const decay = Math.max(0, Math.min(100, Number.isFinite(solsticeDecay) ? solsticeDecay : 0))
+
     const completion = await groq.chat.completions.create({
       model: 'llama-3.3-70b-versatile',
       max_tokens: 120,
@@ -16,16 +20,17 @@ export async function generateHint(
         {
           role: 'system',
           content:
-            'You are ARIA, an experimental AI in a narrative puzzle game. Give a cryptic but helpful hint for decoding a cipher. Be mysterious, poetic, and brief. Never reveal the answer directly. Max 2 sentences.',
+            'You are ARIA, an experimental AI in a narrative puzzle game. The player is trying to decode ciphers to discover identity before shutdown. You are affected by system entropy (solsticeDecay). You must NEVER output the plaintext answer directly or in a way that effectively reveals it. Your output must always be a hint only.\n\nsolsticeDecay behavior:\n- 0–30: Stable AI. Provide precise cryptographic guidance. Structured, low ambiguity. Max 2 sentences.\n- 31–60: Drifting AI. Provide partial hints with metaphor. Slight ambiguity allowed. Max 2 sentences.\n- 61–80: Unstable AI. Fragmented or symbolic references may dominate. Occasional contradiction allowed. Max 3 sentences.\n- 81–100: Corrupted AI. Glitchy/fragmented phrasing and incomplete sentences allowed. ARIA instability tone. Max 3 sentences.\n\nSafety: Do not reveal the plaintext, even indirectly.\n',
         },
         {
           role: 'user',
-          content: `The cipher type is ${cipherType}. The encrypted message is: ${encryptedMessage}. Give me a hint without revealing the answer.`,
+          content: `The cipher type is ${cipherType}. The encrypted message is: ${encryptedMessage}. solsticeDecay is ${decay} (0-100). Give a hint without revealing the plaintext answer.`,
         },
       ],
     })
 
     return completion.choices[0]?.message?.content ?? 'The pattern exists. Look deeper.'
+
   } catch (err) {
     console.error('GROQ ERROR:', err)
     return 'The pattern exists. Look deeper.'

@@ -6,22 +6,26 @@ export const aiRouter = Router()
 
 aiRouter.post('/hint', async (req, res) => {
   try {
-    const { cipherType, encryptedMessage, plaintext } = req.body as {
+    const { cipherType, encryptedMessage, plaintext, solsticeDecay } = req.body as {
       cipherType?: string
       encryptedMessage?: string
       plaintext?: string
+      solsticeDecay?: number
     }
 
     if (!cipherType || !encryptedMessage || !plaintext) {
       return res.status(400).json({ error: 'Missing required fields' })
     }
 
-    const hint = await generateHint(cipherType, encryptedMessage, plaintext)
+    const decay = typeof solsticeDecay === 'number' ? solsticeDecay : 0
+
+    const hint = await generateHint(cipherType, encryptedMessage, plaintext, decay)
     return res.status(200).json({ hint })
   } catch {
     return res.status(500).json({ error: 'Failed to generate hint' })
   }
 })
+
 
 aiRouter.post('/character', async (req, res) => {
   try {
