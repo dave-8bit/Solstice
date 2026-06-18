@@ -3,8 +3,11 @@ import React, { useState } from 'react';
 import type { Puzzle } from '../utils/puzzles';
 import { useGame } from '../context/GameContext';
 import { useGroqHint } from '../hooks/useGroqHint';
+import { getARIAStateFromDecay } from '../utils/ariaState';
+
 
 interface Props {
+
   puzzle: Puzzle
   onSolved: () => void
 }
@@ -17,6 +20,7 @@ export default function PuzzlePanel({ puzzle, onSolved }: Props) {
   const [hintRequested, setHintRequested] = useState(false)
 
   const { hint, loading, fetchHint, error: hintError } = useGroqHint()
+
 
   const phaseLabel = (() => {
     const phaseValue = (puzzle as unknown as { phase?: string }).phase
