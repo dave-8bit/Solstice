@@ -115,6 +115,47 @@ export default function GameScreen() {
     borderRadius: '12px',
   } as const
 
+  const decay = typeof state.solsticeDecay === 'number' ? state.solsticeDecay : 0
+  const decayLevel: 'normal' | 'flicker' | 'shake' | 'glitch' =
+    decay < 30 ? 'normal' : decay < 60 ? 'flicker' : decay < 80 ? 'shake' : 'glitch'
+
+  const decayOverlay =
+    decayLevel === 'normal'
+      ? null
+      : decayLevel === 'flicker'
+        ? {
+            position: 'absolute' as const,
+            inset: 0,
+            zIndex: 4,
+            pointerEvents: 'none' as const,
+            opacity: 0.08,
+            background: 'rgba(255,176,0,0.35)',
+            mixBlendMode: 'screen' as const,
+          }
+        : decayLevel === 'shake'
+          ? {
+              position: 'absolute' as const,
+              inset: 0,
+              zIndex: 4,
+              pointerEvents: 'none' as const,
+              opacity: 0.12,
+              background: 'rgba(0,255,65,0.25)',
+              mixBlendMode: 'screen' as const,
+              filter: 'contrast(1.15) saturate(1.2)',
+              animation: 'solsticeShake 250ms linear infinite' as const,
+            }
+          : {
+              position: 'absolute' as const,
+              inset: 0,
+              zIndex: 4,
+              pointerEvents: 'none' as const,
+              opacity: 0.18,
+              background:
+                'repeating-linear-gradient(to bottom, rgba(255,176,0,0.20) 0px, rgba(255,176,0,0.20) 1px, rgba(0,0,0,0) 3px, rgba(0,0,0,0) 6px)',
+              mixBlendMode: 'screen' as const,
+              filter: 'contrast(1.35) saturate(1.3) hue-rotate(10deg)',
+            }
+
   return (
     <div
       style={{
@@ -126,8 +167,15 @@ export default function GameScreen() {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
+        filter:
+          decayLevel === 'glitch'
+            ? 'none'
+            : decayLevel === 'shake'
+              ? 'contrast(1.05)'
+              : undefined,
       }}
     >
+
       <canvas
         ref={canvasRef}
         aria-hidden="true"
@@ -169,6 +217,9 @@ export default function GameScreen() {
             'repeating-linear-gradient(to bottom, rgba(0, 255, 65, 0.03) 0px, rgba(0, 255, 65, 0.03) 1px, rgba(0, 0, 0, 0) 3px, rgba(0, 0, 0, 0) 6px)',
         }}
       />
+
+      {decayOverlay ? <div style={decayOverlay} /> : null}
+
 
       <div
         style={{

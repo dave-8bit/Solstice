@@ -200,15 +200,19 @@ export default function PuzzlePanel({ puzzle, onSolved }: Props) {
 
     setError(`DECRYPTION FAILED — TIME PENALTY: ${puzzle.timeCostOnFail} MIN`)
     dispatch({ type: 'ADVANCE_TIME', payload: puzzle.timeCostOnFail })
+    dispatch({ type: 'INCREASE_DECAY', payload: puzzle.timeCostOnFail * 0.5 })
   }
+
 
   function onRequestHint() {
     if (isSolved) return
     setHintRequested(true)
     setError(null)
     dispatch({ type: 'ADVANCE_TIME', payload: puzzle.timeCostOnHint })
+    dispatch({ type: 'INCREASE_DECAY', payload: puzzle.timeCostOnHint * 0.3 })
     fetchHint(puzzle.cipherType, puzzle.encryptedMessage, puzzle.plaintext)
   }
+
 
   return (
     <div style={styles.root}>
