@@ -1,8 +1,8 @@
-import React, { useState } from 'react'
+import React, { useState } from 'react';
 
-import type { Puzzle } from '../utils/puzzles'
-import { useGame } from '../context/GameContext'
-import { useGroqHint } from '../hooks/useGroqHint'
+import type { Puzzle } from '../utils/puzzles';
+import { useGame } from '../context/GameContext';
+import { useGroqHint } from '../hooks/useGroqHint';
 
 interface Props {
   puzzle: Puzzle
@@ -16,7 +16,7 @@ export default function PuzzlePanel({ puzzle, onSolved }: Props) {
   const [isSolved, setIsSolved] = useState(false)
   const [hintRequested, setHintRequested] = useState(false)
 
-  const { hint, loading, fetchHint } = useGroqHint()
+  const { hint, loading, fetchHint, error: hintError } = useGroqHint()
 
   const phaseLabel = (() => {
     const phaseValue = (puzzle as unknown as { phase?: string }).phase
@@ -35,8 +35,6 @@ export default function PuzzlePanel({ puzzle, onSolved }: Props) {
   const narrativeText = narrativeTextById[puzzle.id] ?? ''
 
   const shouldShowNarrativeText = isSolved
-
-
 
   const styles: Record<string, React.CSSProperties> = {
     root: {
@@ -203,19 +201,16 @@ export default function PuzzlePanel({ puzzle, onSolved }: Props) {
     dispatch({ type: 'INCREASE_DECAY', payload: puzzle.timeCostOnFail * 0.5 })
   }
 
-
-
   function onRequestHint() {
     if (isSolved) return
     setHintRequested(true)
     setError(null)
     dispatch({ type: 'ADVANCE_TIME', payload: puzzle.timeCostOnHint })
     dispatch({ type: 'INCREASE_DECAY', payload: puzzle.timeCostOnHint * 0.3 })
+
+    // decay included in request body; must not affect response parsing
     fetchHint(puzzle.cipherType, puzzle.encryptedMessage, puzzle.plaintext, 0)
-
   }
-
-
 
   return (
     <div style={styles.root}>
@@ -230,13 +225,12 @@ export default function PuzzlePanel({ puzzle, onSolved }: Props) {
           {hintRequested ? (
             loading ? (
               <div style={styles.clueProminent}>ACCESSING GROQ NEURAL NETWORK...</div>
-            ) : hint ? (
+            ) : hintError ? (
+              <div style={styles.clueProminent}>{hintError}</div>
+            ) : hint !== null ? (
               <div style={styles.clueProminent}>{hint}</div>
-            ) : (
-              <div style={styles.clueProminent}>NEURAL LINK UNSTABLE — CONSULT INTERNAL MEMORY</div>
-            )
+            ) : null
           ) : null}
-
         </>
       ) : (
         <>
