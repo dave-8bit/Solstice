@@ -7,7 +7,7 @@ export interface ARIAState {
   memoryIntegrity: number
 }
 
-function clamp01To100(n: number): number {
+export function clamp01To100(n: number): number {
   if (!Number.isFinite(n)) return 0
   return Math.max(0, Math.min(100, n))
 }

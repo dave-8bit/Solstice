@@ -53,3 +53,8 @@ export function clampDecay(value: number): number {
   return Math.max(0, Math.min(100, v))
 }
 
+export type GameContextValue = {
+  state: GameState
+  dispatch: React.Dispatch<GameAction>
+}
+

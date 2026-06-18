@@ -1,5 +1,5 @@
-import { clampDecay, initialState, phaseFromTime } from './gameState'
-import type { GameAction, GameState } from './gameState'
+import { clampDecay, initialState, phaseFromTime } from './GameState'
+import type { GameAction, GameState } from './GameState'
 
 export function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {

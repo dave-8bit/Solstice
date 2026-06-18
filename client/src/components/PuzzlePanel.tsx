@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
+
 
 import type { Puzzle } from '../utils/puzzles'
 import { useGame } from '../context/GameContext'

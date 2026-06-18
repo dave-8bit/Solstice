@@ -1,11 +1,14 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, { createContext, useContext, useReducer } from 'react'
+import { createContext, useContext, useReducer } from 'react'
+
 
 import type { ReactNode } from 'react'
 
 import { gameReducer } from './gameReducer'
-import { initialState } from './gameState'
+import { initialState } from './GameState'
+
 import type { GameContextValue } from './GameState'
+
 
 
 const GameContext = createContext<GameContextValue | null>(null)
