@@ -4,6 +4,8 @@ import { useMemo, useState } from 'react'
 import type { Puzzle } from '../utils/puzzles'
 import { useGame } from '../context/GameContext'
 import { useGroqHint } from '../hooks/useGroqHint'
+import { evaluateAttempt } from '../utils/evaluateAttempt'
+
 import { getNeuralStabilityPercent } from '../utils/ariaStabilityPercent'
 
 interface Props {
@@ -20,7 +22,10 @@ export default function PuzzlePanel({ puzzle, onSolved, visibility = 'current' }
   const [error, setError] = useState<string | null>(null)
   // Escape-room cognition pressure (local only)
   const [attemptCount, setAttemptCount] = useState(0)
-  const [failurePatternHistory, setFailurePatternHistory] = useState<string[]>([])
+  const [failurePatternHistory, setFailurePatternHistory] = useState<
+    Parameters<typeof evaluateAttempt>[4]
+  >([])
+
 
   const [isSolved, setIsSolved] = useState(false)
   const [hintRequested, setHintRequested] = useState(false)
@@ -215,69 +220,8 @@ export default function PuzzlePanel({ puzzle, onSolved, visibility = 'current' }
   }
 
 
-  function computeAttemptFeedback(input: string, target: string, cipherType: string): {
-    category: 'structure mismatch' | 'correct length but wrong mapping' | 'pattern partially detected' | 'close alignment detected'
-    similarity: number
-  } {
-    // Internal-only analysis; never reveals plaintext.
-    const a = input.trim().toLowerCase()
-    const b = target.trim().toLowerCase()
-
-    if (!a || !b) {
-      return { category: 'structure mismatch', similarity: 0 }
-    }
-
-    // Character overlap similarity (safe + generic).
-    const setA = new Set(a.split(''))
-    const setB = new Set(b.split(''))
-    let overlap = 0
-    for (const ch of setA) {
-      if (setB.has(ch)) overlap++
-    }
-    const denom = Math.max(1, new Set([...setA, ...setB]).size)
-    const similarity = overlap / denom
-
-    // Cipher-specific lightweight structure checks.
-    // We only look at *shape* of the strings, not content mapping.
-    if (cipherType === 'binary') {
-      // Expect 8-bit chunks separated by spaces.
-      const parts = a.split(/\s+/).filter(Boolean)
-      const targetParts = b.split(/\s+/).filter(Boolean)
-      const correctChunkCount = Math.abs(parts.length - targetParts.length) === 0
-      const all8Bit = parts.every((p) => /^[01]{8}$/.test(p))
-      if (correctChunkCount && all8Bit && similarity > 0.15) {
-        return { category: 'pattern partially detected', similarity }
-      }
-      if (parts.length === targetParts.length && all8Bit && similarity <= 0.15) {
-        return { category: 'close alignment detected', similarity }
-      }
-      if (parts.length !== targetParts.length || !all8Bit) {
-        return { category: 'structure mismatch', similarity }
-      }
-    }
-
-    // Generic length/mapping category.
-    const lenDelta = Math.abs(a.length - b.length)
-    const closeLen = lenDelta === 0
-
-    if (closeLen && similarity > 0.25) {
-      return { category: 'close alignment detected', similarity }
-    }
-
-    // If user input has some overlap but not enough.
-    if (similarity > 0.1) {
-      return { category: 'pattern partially detected', similarity }
-    }
-
-    // If input length matches but overlap is low.
-    if (closeLen) {
-      return { category: 'correct length but wrong mapping', similarity }
-    }
-
-    return { category: 'structure mismatch', similarity }
-  }
-
   function onSubmit() {
+
     if (isSolved) return
     setError(null)
 
@@ -288,65 +232,40 @@ export default function PuzzlePanel({ puzzle, onSolved, visibility = 'current' }
       return
     }
 
-    const feedback = computeAttemptFeedback(normalizedAnswer, correctAnswer, puzzle.cipherType)
-    console.log('[ATTEMPT ANALYSIS]', { puzzleId: puzzle.id, similarity: feedback.similarity, category: feedback.category })
+    const result = evaluateAttempt(
+      normalizedAnswer,
+      correctAnswer,
+      puzzle.cipherType,
+      attemptCount,
+      failurePatternHistory
 
-    // Escape Room Cognition v2:
-    // - attemptCount escalates diagnostic precision after repeated failures
-    // - failurePatternHistory detects repeated category + similar attempts
-    const nextAttemptCount = attemptCount + 1
+    )
 
-    // Determine repeated category patterns.
-    const lastCategory = failurePatternHistory.length ? failurePatternHistory[failurePatternHistory.length - 1] : null
-    const repeatedCategory = lastCategory === feedback.category
-
-    // Similar input detection (very lightweight): inferred via repeatedCategory + similarity threshold.
-    // We store only categories in failurePatternHistory; no plaintext/user-content is retained beyond category.
-
-
-    const upgradedAfter = nextAttemptCount >= 3
-
-    let category = feedback.category
-    let suffix = ''
-
-    if (upgradedAfter) {
-      if (repeatedCategory) {
-        // Increase severity without revealing extra solution info.
-        category =
-          category === 'structure mismatch'
-            ? 'structure mismatch'
-            : category === 'correct length but wrong mapping'
-              ? 'close alignment detected'
-              : category
-      } else {
-        // Use the similarity to nudge toward more precise diagnostics.
-        if (feedback.similarity >= 0.22) {
-          category = category === 'pattern partially detected' ? 'close alignment detected' : category
-          suffix = ' — convergence signal'
-        } else if (feedback.similarity <= 0.1) {
-          category = 'structure mismatch'
-        }
-      }
-    }
+    console.log('[ATTEMPT ANALYSIS]', {
+      puzzleId: puzzle.id,
+      similarity: result.similarityScore,
+      category: result.feedbackCategory,
+    })
 
     console.log('[ATTEMPT FEEDBACK STATE]', {
       puzzleId: puzzle.id,
-      attemptCount: nextAttemptCount,
-      repeatedCategory,
-      selectedCategory: category,
+      attemptCount: result.updatedAttemptCount,
+      repeatedCategory: failurePatternHistory.length
+        ? failurePatternHistory[failurePatternHistory.length - 1] === result.feedbackCategory
+        : null,
+      selectedCategory: result.feedbackCategory,
     })
 
-    // Update local cognition states.
-    setAttemptCount(nextAttemptCount)
-    setFailurePatternHistory((prev) => [...prev.slice(-5), category])
+    setAttemptCount(result.updatedAttemptCount)
+    setFailurePatternHistory(result.updatedFailurePatternHistory)
 
-    // Diagnostic feedback only; never reveals plaintext.
     setError(
-      `DECRYPTION FAILED — DIAGNOSTIC: ${category.toUpperCase()} — TIME PENALTY: ${puzzle.timeCostOnFail} MIN${suffix}`
+      `DECRYPTION FAILED — DIAGNOSTIC: ${result.feedbackCategory.toUpperCase()} — TIME PENALTY: ${puzzle.timeCostOnFail} MIN`
     )
 
     dispatch({ type: 'ADVANCE_TIME', payload: puzzle.timeCostOnFail })
     dispatch({ type: 'INCREASE_DECAY', payload: puzzle.timeCostOnFail * 0.5 })
+
   }
 
 
