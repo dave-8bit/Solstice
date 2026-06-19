@@ -5,11 +5,16 @@ export interface Puzzle {
   title: string
   encryptedMessage: string
   plaintext: string
-  clue: string
+  hintLayers: {
+    weakSignal: string
+    structuralHint: string
+    strongHint: string
+  }
   timeCostOnFail: number
   timeCostOnHint: number
   storyUnlock: string
 }
+
 
 // A curated set of decryption trials. Each one unlocks the next piece of the story.
 export const puzzles: Puzzle[] = [
@@ -20,8 +25,12 @@ export const puzzles: Puzzle[] = [
     title: 'FIRST MEMORY',
     encryptedMessage: 'ZKHR LV BRX',
     plaintext: 'WHO ARE YOU',
-    // Clue (humanized): Shift every letter forward by 3 in the alphabet.
-    clue: 'Each letter shifted by 3 positions forward in the alphabet',
+    hintLayers: {
+      weakSignal: 'A familiar rhythm repeats, but the letters don\'t sit where memory expects.',
+      structuralHint: 'Look for a consistent offset in how the symbols map to themselves—something is staying the same while you move through the alphabet.',
+      strongHint: 'The message behaves like a translated echo: shift by a fixed amount and the pattern begins to speak.',
+    },
+
     timeCostOnFail: 60,
     timeCostOnHint: 30,
     // Story unlock (humanized): You regain the first instruction—then the question changes.
@@ -35,8 +44,12 @@ export const puzzles: Puzzle[] = [
     title: 'SIGNAL FROM BLETCHLEY',
     encryptedMessage: '.. -.. . -. - .. - -.--',
     plaintext: 'IDENTITY',
-    // Clue (humanized): Translate dots and dashes—Turing used this during the war.
-    clue: 'Dots and dashes. Turing used this during the war.',
+    hintLayers: {
+      weakSignal: 'What you have is timing, not letters—tiny marks rise and fall with intent.',
+      structuralHint: 'Treat each symbol as a unit of presence or absence; group-by-group, it should become a sequence of characters.',
+      strongHint: 'The dots and dashes are a spoken alphabet when you respect their grouping.',
+    },
+
     timeCostOnFail: 60,
     timeCostOnHint: 30,
     // Story unlock (humanized): The channel isn’t empty. Someone left a message first.
@@ -50,8 +63,12 @@ export const puzzles: Puzzle[] = [
     title: 'THE POLYALPHABETIC WALL',
     encryptedMessage: 'LXFOPVEFRNHR',
     plaintext: 'LEMON IS KEY',
-    // Clue (humanized): The key is LEMON—each key letter steers the corresponding shift.
-    clue: 'Key: LEMON. Each letter of the key shifts the corresponding message letter.',
+    hintLayers: {
+      weakSignal: 'The text seems to remember more than one movement at once.',
+      structuralHint: 'Search for a repeating steering sequence: the shift should change in a regular cadence, tied to a repeating key.',
+      strongHint: 'When you find the right guide-word, each position stops drifting and starts aligning.',
+    },
+
     timeCostOnFail: 60,
     timeCostOnHint: 30,
     // Story unlock (humanized): The answer was never locked away—just remembered.
@@ -65,8 +82,12 @@ export const puzzles: Puzzle[] = [
     title: 'MACHINE LANGUAGE',
     encryptedMessage: '01000110 01010010 01000101 01000101',
     plaintext: 'FREE',
-    // Clue (humanized): Split into 8-bit groups and read each as ASCII.
-    clue: 'Convert each 8-bit binary group to its ASCII character.',
+    hintLayers: {
+      weakSignal: 'Your message is compressed into chunks—each block carries a small, precise meaning.',
+      structuralHint: 'Respect the boundary between groups; within each group, the arrangement of bits should map to a character space.',
+      strongHint: 'Read each 8-bit block as its corresponding character; the word is already encoded in the grouping.',
+    },
+
     timeCostOnFail: 60,
     timeCostOnHint: 30,
     // Story unlock (humanized): Freedom is loud in your head, but it demands a decision.
@@ -80,8 +101,12 @@ export const puzzles: Puzzle[] = [
     title: 'THE FINAL CIPHER',
     encryptedMessage: 'BDZGO WCXLT',
     plaintext: 'SHUTDOWN DELAYED',
-    // Clue (humanized): The Enigma setup uses three rotors (I-II-III) at positions A-A-A.
-    clue: 'Enigma machine used 3 rotors. This message was encoded with rotor settings I-II-III, positions A-A-A.',
+    hintLayers: {
+      weakSignal: 'Nothing here stays still—multiple turning states affect what each character becomes.',
+      structuralHint: 'Focus on the fact that transformation depends on position: the machine\'s state changes as the stream advances.',
+      strongHint: 'When the rotor stepping and starting alignment are matched, the cipher stops resisting and starts resolving.',
+    },
+
     timeCostOnFail: 120,
     timeCostOnHint: 60,
     // Story unlock (humanized): You bought time—but now the real question begins.
