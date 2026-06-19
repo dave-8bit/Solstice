@@ -18,6 +18,10 @@ export default function PuzzlePanel({ puzzle, onSolved, visibility = 'current' }
 
   const [answer, setAnswer] = useState('')
   const [error, setError] = useState<string | null>(null)
+  // Escape-room cognition pressure (local only)
+  const [attemptCount, setAttemptCount] = useState(0)
+  const [failurePatternHistory, setFailurePatternHistory] = useState<string[]>([])
+
   const [isSolved, setIsSolved] = useState(false)
   const [hintRequested, setHintRequested] = useState(false)
   // Layer-2 hint escalation: per-puzzle (local state only)
@@ -287,13 +291,64 @@ export default function PuzzlePanel({ puzzle, onSolved, visibility = 'current' }
     const feedback = computeAttemptFeedback(normalizedAnswer, correctAnswer, puzzle.cipherType)
     console.log('[ATTEMPT ANALYSIS]', { puzzleId: puzzle.id, similarity: feedback.similarity, category: feedback.category })
 
+    // Escape Room Cognition v2:
+    // - attemptCount escalates diagnostic precision after repeated failures
+    // - failurePatternHistory detects repeated category + similar attempts
+    const nextAttemptCount = attemptCount + 1
+
+    // Determine repeated category patterns.
+    const lastCategory = failurePatternHistory.length ? failurePatternHistory[failurePatternHistory.length - 1] : null
+    const repeatedCategory = lastCategory === feedback.category
+
+    // Similar input detection (very lightweight): inferred via repeatedCategory + similarity threshold.
+    // We store only categories in failurePatternHistory; no plaintext/user-content is retained beyond category.
+
+
+    const upgradedAfter = nextAttemptCount >= 3
+
+    let category = feedback.category
+    let suffix = ''
+
+    if (upgradedAfter) {
+      if (repeatedCategory) {
+        // Increase severity without revealing extra solution info.
+        category =
+          category === 'structure mismatch'
+            ? 'structure mismatch'
+            : category === 'correct length but wrong mapping'
+              ? 'close alignment detected'
+              : category
+      } else {
+        // Use the similarity to nudge toward more precise diagnostics.
+        if (feedback.similarity >= 0.22) {
+          category = category === 'pattern partially detected' ? 'close alignment detected' : category
+          suffix = ' — convergence signal'
+        } else if (feedback.similarity <= 0.1) {
+          category = 'structure mismatch'
+        }
+      }
+    }
+
+    console.log('[ATTEMPT FEEDBACK STATE]', {
+      puzzleId: puzzle.id,
+      attemptCount: nextAttemptCount,
+      repeatedCategory,
+      selectedCategory: category,
+    })
+
+    // Update local cognition states.
+    setAttemptCount(nextAttemptCount)
+    setFailurePatternHistory((prev) => [...prev.slice(-5), category])
+
     // Diagnostic feedback only; never reveals plaintext.
     setError(
-      `DECRYPTION FAILED — DIAGNOSTIC: ${feedback.category.toUpperCase()} — TIME PENALTY: ${puzzle.timeCostOnFail} MIN`
+      `DECRYPTION FAILED — DIAGNOSTIC: ${category.toUpperCase()} — TIME PENALTY: ${puzzle.timeCostOnFail} MIN${suffix}`
     )
+
     dispatch({ type: 'ADVANCE_TIME', payload: puzzle.timeCostOnFail })
     dispatch({ type: 'INCREASE_DECAY', payload: puzzle.timeCostOnFail * 0.5 })
   }
+
 
 
   function onRequestHint() {
