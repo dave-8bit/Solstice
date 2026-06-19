@@ -372,9 +372,11 @@ export default function GameScreen() {
               }}
             >
               <PuzzlePanel
+                key={activePuzzle.id}
                 puzzle={activePuzzle}
                 visibility="current"
                 onSolved={() => {
+
                   // Let the reducer be the source of truth for unlocking.
                   // After the active puzzle is completed, if all puzzles are completed, transition to ending.
                   const updatedCompleted = [...state.completedPuzzles]
