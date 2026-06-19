@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
+
 
 
 import { useGame } from '../context/GameContext'
@@ -7,6 +8,8 @@ import PuzzlePanel from '../components/PuzzlePanel'
 import { evaluateEnding } from '../utils/endingLogic'
 
 export default function GameScreen() {
+
+
   const { dispatch, state } = useGame()
 
 
@@ -96,9 +99,12 @@ export default function GameScreen() {
     }
   }, [])
 
-  const [activePuzzleId, setActivePuzzleId] = useState<number>(puzzles[0]?.id ?? 1)
+  // Layer 1: active puzzle derived from state (no UI-driven selection)
+  const activePuzzleIndex = Math.max(0, Math.min(puzzles.length - 1, state.currentPuzzleIndex ?? 0))
+  const activePuzzle = puzzles[activePuzzleIndex] ?? puzzles[0]
 
-  const activePuzzle = puzzles.find((p) => p.id === activePuzzleId) ?? puzzles[0]
+
+
 
   const cursorStyle: React.CSSProperties = {
     color: '#ffb000',
@@ -299,33 +305,48 @@ export default function GameScreen() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-              {puzzles.map((p) => {
-                const isActive = p.id === activePuzzleId
+              {puzzles.map((p, idx) => {
+                const isCompleted = state.completedPuzzles.includes(p.id)
+                const isCurrent = idx === activePuzzleIndex
+                const isLocked = !isCompleted && !isCurrent
+
                 return (
-                  <button
+                  <div
                     key={p.id}
-                    type="button"
-                    onClick={() => setActivePuzzleId(p.id)}
                     style={{
                       width: '100%',
                       textAlign: 'left',
                       padding: '0.55rem 0.75rem',
-                      background: isActive ? 'rgba(0, 255, 65, 0.10)' : 'rgba(0, 0, 0, 0)',
+                      background: isCurrent ? 'rgba(0, 255, 65, 0.10)' : 'rgba(0, 0, 0, 0)',
                       border: '1px solid rgba(0, 255, 65, 0.2)',
-                      color: '#00ff41',
-                      fontFamily: "'Courier New', monospace",
-                      fontSize: '0.95rem',
                       borderRadius: '10px',
-                      cursor: 'pointer',
+                      cursor: isCurrent ? 'pointer' : 'default',
+                      userSelect: 'none',
+                      opacity: isLocked ? 0.75 : 1,
                     }}
                   >
-                    <div style={{ color: '#00ff41' }}>{p.title}</div>
-                    <div style={{ color: '#008f11', fontSize: '0.85rem', fontStyle: 'italic', marginTop: '0.15rem' }}>
-                      [ {p.phase.toUpperCase()} ]
-                    </div>
-                  </button>
+                    {isLocked ? (
+                      <div style={{ color: '#ffb000', fontFamily: "'Courier New', monospace", fontSize: '0.95rem' }}>
+                        [ LOCKED TRANSMISSION ]
+                        <div style={{ color: '#008f11', fontSize: '0.85rem', fontStyle: 'italic', marginTop: '0.15rem' }}>
+                          SIGNAL UNAVAILABLE
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div style={{ color: '#00ff41', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          {isCompleted ? '✓' : ''}
+                          <span>{isCompleted ? p.title : p.title}</span>
+                        </div>
+                        <div style={{ color: '#008f11', fontSize: '0.85rem', fontStyle: 'italic', marginTop: '0.15rem' }}>
+                          {isCompleted ? '[ COMPLETED ]' : `[ ${p.phase.toUpperCase()} ]`}
+                        </div>
+                      </>
+                    )}
+                  </div>
                 )
               })}
+
             </div>
           </div>
 
@@ -352,12 +373,15 @@ export default function GameScreen() {
             >
               <PuzzlePanel
                 puzzle={activePuzzle}
+                visibility="current"
                 onSolved={() => {
-                  const updatedCompleted = [...state.puzzlesCompleted]
-                  const activePuzzleId = activePuzzle.id
-                  if (!updatedCompleted.includes(activePuzzleId)) {
-                    updatedCompleted.push(activePuzzleId)
+                  // Let the reducer be the source of truth for unlocking.
+                  // After the active puzzle is completed, if all puzzles are completed, transition to ending.
+                  const updatedCompleted = [...state.completedPuzzles]
+                  if (!updatedCompleted.includes(activePuzzle.id)) {
+                    updatedCompleted.push(activePuzzle.id)
                   }
+
                   if (updatedCompleted.length >= 5) {
                     const ending = evaluateEnding(updatedCompleted, state.flags, state.gameTime)
                     dispatch({ type: 'SET_ENDING', payload: ending })
@@ -365,6 +389,8 @@ export default function GameScreen() {
                   }
                 }}
               />
+
+
 
               <div style={{ marginTop: '0.75rem' }}>
                 <span style={cursorStyle} aria-hidden="true">

@@ -9,9 +9,11 @@ import { getNeuralStabilityPercent } from '../utils/ariaStabilityPercent'
 interface Props {
   puzzle: Puzzle
   onSolved: () => void
+  visibility?: 'current' | 'completed' | 'locked'
 }
 
-export default function PuzzlePanel({ puzzle, onSolved }: Props) {
+export default function PuzzlePanel({ puzzle, onSolved, visibility = 'current' }: Props) {
+
   const { dispatch, state } = useGame()
 
   const [answer, setAnswer] = useState('')
@@ -28,6 +30,7 @@ export default function PuzzlePanel({ puzzle, onSolved }: Props) {
     const phase = typeof phaseValue === 'string' && phaseValue.trim().length ? phaseValue : 'DAWN'
     return phase.trim().toUpperCase()
   })()
+
 
   const narrativeTextById: Record<number, string> = {
     1: 'A fragment surfaces from the void. Your first memory — fragmented, corrupted. Decode it.',
@@ -181,6 +184,16 @@ export default function PuzzlePanel({ puzzle, onSolved }: Props) {
 
   const normalizedAnswer = answer.trim().toLowerCase()
   const correctAnswer = puzzle.plaintext.trim().toLowerCase()
+
+  if (visibility === 'locked') {
+    return (
+      <div style={styles.root}>
+        <div style={styles.title}>[ LOCKED TRANSMISSION ]</div>
+        <div style={{ color: '#ffb000', fontSize: '0.95rem', fontFamily: "'Courier New', monospace" }}>SIGNAL UNAVAILABLE</div>
+      </div>
+    )
+  }
+
 
   function onSubmit() {
     if (isSolved) return

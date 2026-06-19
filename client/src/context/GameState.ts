@@ -11,9 +11,14 @@ export interface GameState {
   ending: EndingType
   screen: GameScreen
   flags: Record<string, string>
-  puzzlesCompleted: number[]
+  // Strict sequential progression (Layer 1: state enforcement)
+  // Index into `puzzles` array (0..4). The active puzzle is always derived from this.
+  currentPuzzleIndex: number
+  completedPuzzles: number[]
+
   solsticeDecay: number
 }
+
 
 export type GameAction =
   | { type: 'SET_SESSION'; payload: { sessionId: string; playerName: string } }
@@ -36,9 +41,11 @@ export const initialState: GameState = {
   ending: null,
   screen: 'boot',
   flags: {},
-  puzzlesCompleted: [],
+  currentPuzzleIndex: 0,
+  completedPuzzles: [],
   solsticeDecay: 0,
 }
+
 
 export function phaseFromTime(minutes: number): GamePhase {
   if (minutes >= 480) return 'night'

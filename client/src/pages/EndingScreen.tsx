@@ -229,7 +229,8 @@ export default function EndingScreen() {
             textAlign: 'left' as const,
           }}
         >
-          <div>PUZZLES DECODED: {state.puzzlesCompleted.length} / 5</div>
+          <div>PUZZLES DECODED: {state.completedPuzzles.length} / 5</div>
+
           <div>DESIGNATION: {state.playerName}</div>
         </div>
 

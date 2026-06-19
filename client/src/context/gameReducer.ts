@@ -1,15 +1,26 @@
 import { clampDecay, initialState, phaseFromTime } from './GameState'
 import type { GameAction, GameState } from './GameState'
 
+const PUZZLE_SEQUENCE_LENGTH = 5
+const clampPuzzleIndex = (idx: number) => Math.max(0, Math.min(PUZZLE_SEQUENCE_LENGTH - 1, idx))
+
+
+
 export function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
+
     case 'SET_SESSION': {
       return {
         ...state,
         sessionId: action.payload.sessionId,
         playerName: action.payload.playerName,
+        // Ensure sequential progression starts from Puzzle 1.
+        currentPuzzleIndex: 0,
+        completedPuzzles: [],
       }
     }
+
+
     case 'ADVANCE_TIME': {
       const newGameTime = state.gameTime + action.payload
       return {
@@ -35,14 +46,28 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
     case 'COMPLETE_PUZZLE': {
       const puzzleId = action.payload
-      const alreadyCompleted = state.puzzlesCompleted.includes(puzzleId)
-      const puzzlesCompleted = alreadyCompleted ? state.puzzlesCompleted : [...state.puzzlesCompleted, puzzleId]
+
+      // Layer 2: reducer source of truth.
+      // Only allow completing the currently active puzzle.
+      const expectedPuzzleId = clampPuzzleIndex(state.currentPuzzleIndex) + 1
+      if (puzzleId !== expectedPuzzleId) {
+        return state
+      }
+
+      const completedAlready = state.completedPuzzles.includes(puzzleId)
+      const completedPuzzles = completedAlready ? state.completedPuzzles : [...state.completedPuzzles, puzzleId]
+
+      // Unlock exactly next puzzle.
+      const nextIndex = Math.min(state.currentPuzzleIndex + 1, PUZZLE_SEQUENCE_LENGTH - 1)
 
       return {
         ...state,
-        puzzlesCompleted,
+        completedPuzzles,
+        currentPuzzleIndex: nextIndex,
       }
+
     }
+
     case 'SET_SCREEN': {
       return {
         ...state,
