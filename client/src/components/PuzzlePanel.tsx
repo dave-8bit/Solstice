@@ -22,9 +22,8 @@ export default function PuzzlePanel({ puzzle, onSolved, visibility = 'current' }
   const [error, setError] = useState<string | null>(null)
   // Escape-room cognition pressure (local only)
   const [attemptCount, setAttemptCount] = useState(0)
-  const [failurePatternHistory, setFailurePatternHistory] = useState<
-    Parameters<typeof evaluateAttempt>[4]
-  >([])
+  const [failurePatternHistory, setFailurePatternHistory] = useState<any[]>([])
+
 
 
   const [isSolved, setIsSolved] = useState(false)
