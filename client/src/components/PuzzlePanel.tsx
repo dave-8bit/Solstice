@@ -20,10 +20,26 @@ export default function PuzzlePanel({ puzzle, onSolved, visibility = 'current' }
   const [error, setError] = useState<string | null>(null)
   const [isSolved, setIsSolved] = useState(false)
   const [hintRequested, setHintRequested] = useState(false)
+  // Layer-2 hint escalation: per-puzzle (local state only)
+  const [hintLevel, setHintLevel] = useState<0 | 1 | 2>(0)
 
-  const { hint, loading, fetchHint, error: hintError } = useGroqHint()
+  const { loading, fetchHint, error: hintError } = useGroqHint()
 
-  const displayedHint: string | null = hintRequested ? (hintError ? null : hint) : null
+
+  const displayedHint: string | null = hintRequested
+    ? hintError
+      ? null
+      : hintLevel === 0
+        ? puzzle.hintLayers.weakSignal.trim()
+        : hintLevel === 1
+          ? puzzle.hintLayers.structuralHint.trim()
+          : puzzle.hintLayers.strongHint.trim()
+    : null
+
+
+
+
+
 
   const phaseLabel = (() => {
     const phaseValue = (puzzle as unknown as { phase?: string }).phase
@@ -213,14 +229,27 @@ export default function PuzzlePanel({ puzzle, onSolved, visibility = 'current' }
 
   function onRequestHint() {
     if (isSolved) return
+
+    // Escape-room style escalation: weak(0) -> structural(1) -> strong(2)
+    // Track locally per puzzle panel instance.
+    const nextLevel = hintLevel === 2 ? 2 : ((hintLevel + 1) as 0 | 1 | 2)
+
+    const selectedHintType: 'weakSignal' | 'structuralHint' | 'strongHint' =
+      nextLevel === 0 ? 'weakSignal' : nextLevel === 1 ? 'structuralHint' : 'strongHint'
+
+    console.log(`[HINT SYSTEM] puzzle=${puzzle.id} level=${nextLevel} type=${selectedHintType === 'weakSignal' ? 'weak' : selectedHintType === 'structuralHint' ? 'structural' : 'strong'}`)
+
+
     setHintRequested(true)
+
     setError(null)
     dispatch({ type: 'ADVANCE_TIME', payload: puzzle.timeCostOnHint })
     dispatch({ type: 'INCREASE_DECAY', payload: puzzle.timeCostOnHint * 0.3 })
 
-    // decay included in request body; must not affect response parsing
-    fetchHint(puzzle.cipherType, puzzle.encryptedMessage, puzzle.plaintext, 0)
+    fetchHint(puzzle.cipherType, puzzle.encryptedMessage, puzzle.plaintext, 0, nextLevel)
+    setHintLevel(nextLevel)
   }
+
 
   return (
     <div style={styles.root}>

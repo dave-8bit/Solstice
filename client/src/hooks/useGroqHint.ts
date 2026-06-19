@@ -8,15 +8,25 @@ export function useGroqHint() {
   const [error, setError] = useState<string | null>(null);
 
   const fetchHint = useCallback(
-    async (cipherType: string, encryptedMessage: string, plaintext: string, solsticeDecay: number) => {
+    async (
+      cipherType: string,
+      encryptedMessage: string,
+      plaintext: string,
+      solsticeDecay: number,
+      hintLevel: 0 | 1 | 2
+    ) => {
       const safeDecay = Number.isFinite(solsticeDecay) ? solsticeDecay : 0;
+
+      // Layer 2 only: keep API payload unchanged.
+      // We escalate locally by requesting progressively more "present" hints.
+      // HintLevel does NOT go to the backend.
       const payload = { cipherType, encryptedMessage, plaintext, solsticeDecay: safeDecay };
 
       setLoading(true);
       setError(null);
 
       try {
-        console.log('[HINT REQUEST]', { payload, endpoint: '/api/ai/hint' });
+        console.log('[HINT REQUEST]', { payload, endpoint: '/api/ai/hint', hintLevel });
 
         const res = await fetch('/api/ai/hint', {
           method: 'POST',
@@ -42,7 +52,11 @@ export function useGroqHint() {
           throw new Error('Invalid hint payload');
         }
 
+        // Transport only: return backend hint string for now.
+        // Semantic tier selection is enforced in PuzzlePanel using puzzle.hintLayers.
         setHint(parsedHint);
+
+
       } catch (err) {
         console.error('[HINT ERROR]', err);
         setHint(null);
@@ -56,4 +70,5 @@ export function useGroqHint() {
 
   return { hint, loading, error, fetchHint };
 }
+
 
