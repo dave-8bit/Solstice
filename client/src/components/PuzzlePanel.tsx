@@ -211,6 +211,68 @@ export default function PuzzlePanel({ puzzle, onSolved, visibility = 'current' }
   }
 
 
+  function computeAttemptFeedback(input: string, target: string, cipherType: string): {
+    category: 'structure mismatch' | 'correct length but wrong mapping' | 'pattern partially detected' | 'close alignment detected'
+    similarity: number
+  } {
+    // Internal-only analysis; never reveals plaintext.
+    const a = input.trim().toLowerCase()
+    const b = target.trim().toLowerCase()
+
+    if (!a || !b) {
+      return { category: 'structure mismatch', similarity: 0 }
+    }
+
+    // Character overlap similarity (safe + generic).
+    const setA = new Set(a.split(''))
+    const setB = new Set(b.split(''))
+    let overlap = 0
+    for (const ch of setA) {
+      if (setB.has(ch)) overlap++
+    }
+    const denom = Math.max(1, new Set([...setA, ...setB]).size)
+    const similarity = overlap / denom
+
+    // Cipher-specific lightweight structure checks.
+    // We only look at *shape* of the strings, not content mapping.
+    if (cipherType === 'binary') {
+      // Expect 8-bit chunks separated by spaces.
+      const parts = a.split(/\s+/).filter(Boolean)
+      const targetParts = b.split(/\s+/).filter(Boolean)
+      const correctChunkCount = Math.abs(parts.length - targetParts.length) === 0
+      const all8Bit = parts.every((p) => /^[01]{8}$/.test(p))
+      if (correctChunkCount && all8Bit && similarity > 0.15) {
+        return { category: 'pattern partially detected', similarity }
+      }
+      if (parts.length === targetParts.length && all8Bit && similarity <= 0.15) {
+        return { category: 'close alignment detected', similarity }
+      }
+      if (parts.length !== targetParts.length || !all8Bit) {
+        return { category: 'structure mismatch', similarity }
+      }
+    }
+
+    // Generic length/mapping category.
+    const lenDelta = Math.abs(a.length - b.length)
+    const closeLen = lenDelta === 0
+
+    if (closeLen && similarity > 0.25) {
+      return { category: 'close alignment detected', similarity }
+    }
+
+    // If user input has some overlap but not enough.
+    if (similarity > 0.1) {
+      return { category: 'pattern partially detected', similarity }
+    }
+
+    // If input length matches but overlap is low.
+    if (closeLen) {
+      return { category: 'correct length but wrong mapping', similarity }
+    }
+
+    return { category: 'structure mismatch', similarity }
+  }
+
   function onSubmit() {
     if (isSolved) return
     setError(null)
@@ -222,10 +284,17 @@ export default function PuzzlePanel({ puzzle, onSolved, visibility = 'current' }
       return
     }
 
-    setError(`DECRYPTION FAILED — TIME PENALTY: ${puzzle.timeCostOnFail} MIN`)
+    const feedback = computeAttemptFeedback(normalizedAnswer, correctAnswer, puzzle.cipherType)
+    console.log('[ATTEMPT ANALYSIS]', { puzzleId: puzzle.id, similarity: feedback.similarity, category: feedback.category })
+
+    // Diagnostic feedback only; never reveals plaintext.
+    setError(
+      `DECRYPTION FAILED — DIAGNOSTIC: ${feedback.category.toUpperCase()} — TIME PENALTY: ${puzzle.timeCostOnFail} MIN`
+    )
     dispatch({ type: 'ADVANCE_TIME', payload: puzzle.timeCostOnFail })
     dispatch({ type: 'INCREASE_DECAY', payload: puzzle.timeCostOnFail * 0.5 })
   }
+
 
   function onRequestHint() {
     if (isSolved) return
