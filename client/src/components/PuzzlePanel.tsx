@@ -105,6 +105,8 @@ export default function PuzzlePanel({ puzzle, onSolved, visibility = 'current' }
     },
     encryptedMessage: {
       color: '#00ff41',
+      wordBreak: 'break-word',
+      overflowWrap: 'anywhere',
       fontSize: '1.3rem',
       letterSpacing: '0.15em',
       fontFamily: "'Courier New', monospace",
@@ -123,6 +125,7 @@ export default function PuzzlePanel({ puzzle, onSolved, visibility = 'current' }
     },
     input: {
       background: '#0a0a0a',
+      minWidth: 0,
       border: '1px solid rgba(0, 255, 65, 0.6)',
       color: '#00ff41',
       fontFamily: "'Courier New', monospace",
