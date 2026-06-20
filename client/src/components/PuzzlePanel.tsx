@@ -250,8 +250,17 @@ export default function PuzzlePanel({ puzzle, onSolved, visibility = 'current' }
     setAttemptCount(result.updatedAttemptCount)
     setFailurePatternHistory(result.updatedFailurePatternHistory)
 
+    console.log('[ATTEMPT ANALYSIS V3]', {
+      puzzleId: puzzle.id,
+      accuracyPercent: result.accuracyPercent,
+      firstMismatchIndex: result.firstMismatchIndex,
+      feedbackCategory: result.feedbackCategory,
+    })
+
     setError(
-      `DECRYPTION FAILED — DIAGNOSTIC: ${result.feedbackCategory.toUpperCase()} — TIME PENALTY: ${puzzle.timeCostOnFail} MIN`
+      `SIGNAL ANALYSIS\n${result.accuracyPercent}% ALIGNMENT$${
+        result.firstMismatchIndex !== null ? `\nFIRST STRUCTURAL DEVIATION:\nPOSITION ${result.firstMismatchIndex}` : ''
+      }\n${result.feedbackCategory.toUpperCase()} — TIME PENALTY: ${puzzle.timeCostOnFail} MIN`
     )
 
     dispatch({ type: 'ADVANCE_TIME', payload: puzzle.timeCostOnFail })
