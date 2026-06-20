@@ -17,8 +17,11 @@ export default function App() {
       style={{
         minHeight: '100vh',
         width: '100%',
+        maxWidth: '100vw',
+        overflowX: 'hidden',
         background: '#0a0a0a',
         position: 'relative',
+        boxSizing: 'border-box',
       }}
     >
       {screen === 'boot' && <BootScreen />}
