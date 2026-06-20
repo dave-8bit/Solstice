@@ -6,7 +6,13 @@ export type FeedbackCategory =
 
 export type EvaluateAttemptResult = {
   feedbackCategory: FeedbackCategory
+  // legacy name used by existing UI
   similarityScore: number
+  // NEW position-aware diagnostics
+  accuracyPercent: number
+  firstMismatchIndex: number | null
+  exactMatch: boolean
+  // keep compatibility with existing escalation
   updatedAttemptCount: number
   updatedFailurePatternHistory: FeedbackCategory[]
 }
@@ -26,6 +32,9 @@ export function evaluateAttempt(
     return {
       feedbackCategory: 'structure mismatch',
       similarityScore: 0,
+      accuracyPercent: 0,
+      firstMismatchIndex: null,
+      exactMatch: false,
       updatedAttemptCount,
       updatedFailurePatternHistory: [...history.slice(-5), 'structure mismatch'],
     }
@@ -33,7 +42,27 @@ export function evaluateAttempt(
 
   if (!a || !b) return safeFeedback()
 
-  // Similarity score (internal + deterministic): character set overlap.
+  // ----- Position-aware comparison (Escape-room Cognition v3) -----
+  // Compare normalized input against normalized target.
+  // Never reveal missing characters / exact plaintext.
+  const totalCharacters = Math.max(a.length, b.length)
+  const minLen = Math.min(a.length, b.length)
+
+  let matchingCharacters = 0
+  let firstMismatchIndex: number | null = null
+
+  for (let i = 0; i < minLen; i++) {
+    if (a[i] === b[i]) {
+      matchingCharacters++
+    } else if (firstMismatchIndex === null) {
+      firstMismatchIndex = i
+    }
+  }
+
+  const accuracyPercent = totalCharacters === 0 ? 0 : (matchingCharacters / totalCharacters) * 100
+  const exactMatch = a === b
+
+  // Similarity score (existing behavior: character set overlap)
   const setA = new Set(a.split(''))
   const setB = new Set(b.split(''))
   let overlap = 0
@@ -43,9 +72,25 @@ export function evaluateAttempt(
   const denom = Math.max(1, new Set([...setA, ...setB]).size)
   const similarityScore = overlap / denom
 
+  // ----- Diagnostic rules (no solution revelation) -----
+  // 0-30: incoherent
+  // 30-60: partial pattern detected
+  // 60-90: alignment detected near position X
+  // 90-99: signal stable except final deviations
+  // 100: solved
+  const diagnosticCategory = (() => {
+    if (exactMatch) return 'close alignment detected' as const
+
+    if (accuracyPercent < 30) return 'structure mismatch' as const
+    if (accuracyPercent < 60) return 'pattern partially detected' as const
+    if (accuracyPercent < 90) return 'correct length but wrong mapping' as const
+    // 90..99
+    return 'close alignment detected' as const
+  })()
+
+  // For existing UI: map v3 diagnostics to legacy feedback categories.
+  // We keep cipherType-based structure checks to preserve old behavior for binary puzzles.
   const baseCategory = (() => {
-    // Cipher-specific lightweight structure checks.
-    // We only look at *shape* of the strings, not content mapping.
     if (cipherType === 'binary') {
       const parts = a.split(/\s+/).filter(Boolean)
       const targetParts = b.split(/\s+/).filter(Boolean)
@@ -63,39 +108,25 @@ export function evaluateAttempt(
       }
     }
 
-    // Generic length/mapping category.
     const lenDelta = Math.abs(a.length - b.length)
     const closeLen = lenDelta === 0
 
-    if (closeLen && similarityScore > 0.25) {
-      return 'close alignment detected' as const
-    }
-
-    if (similarityScore > 0.1) {
-      return 'pattern partially detected' as const
-    }
-
-    if (closeLen) {
-      return 'correct length but wrong mapping' as const
-    }
-
+    if (closeLen && similarityScore > 0.25) return 'close alignment detected' as const
+    if (similarityScore > 0.1) return 'pattern partially detected' as const
+    if (closeLen) return 'correct length but wrong mapping' as const
     return 'structure mismatch' as const
   })()
 
-  // Escape-room Cognition v2: attempt escalation after threshold
   const updatedAttemptCount = attemptCount + 1
   const lastCategory: FeedbackCategory | null = history.length ? history[history.length - 1] : null
   const repeatedCategory = lastCategory === baseCategory
-
   const upgradedAfter = updatedAttemptCount >= 3
 
-  let feedbackCategory: FeedbackCategory = baseCategory
+  // Combine legacy escalation with v3 diagnostic category.
+  let feedbackCategory: FeedbackCategory = diagnosticCategory
 
   if (upgradedAfter) {
     if (repeatedCategory) {
-
-      // Increase severity without revealing extra solution info.
-      // Deterministic remap when repeatedly failing.
       feedbackCategory =
         feedbackCategory === 'structure mismatch'
           ? 'structure mismatch'
@@ -103,16 +134,11 @@ export function evaluateAttempt(
             ? 'close alignment detected'
             : feedbackCategory
     } else {
-      // Use similarity to nudge toward more precise diagnostics.
       if (similarityScore >= 0.22) {
-        feedbackCategory =
-          feedbackCategory === 'pattern partially detected'
-            ? 'close alignment detected'
-            : feedbackCategory
+        feedbackCategory = feedbackCategory === 'pattern partially detected' ? 'close alignment detected' : feedbackCategory
       } else if (similarityScore <= 0.1) {
         feedbackCategory = 'structure mismatch'
       }
-
     }
   }
 
@@ -121,8 +147,14 @@ export function evaluateAttempt(
   return {
     feedbackCategory,
     similarityScore,
+    accuracyPercent: Math.round(accuracyPercent),
+    // rule wants FIRST STRUCTURAL DEVIATION POSITION X (1-based for UI friendliness)
+    // but we return index; UI can format. We do not reveal missing characters.
+    firstMismatchIndex: firstMismatchIndex === null ? null : firstMismatchIndex + 1,
+    exactMatch,
     updatedAttemptCount,
     updatedFailurePatternHistory,
   }
 }
+
 
