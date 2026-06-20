@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
 
-
 import type { Puzzle } from '../utils/puzzles'
 import { useGame } from '../context/GameContext'
 import { useGroqHint } from '../hooks/useGroqHint'
@@ -15,16 +14,13 @@ interface Props {
 }
 
 export default function PuzzlePanel({ puzzle, onSolved, visibility = 'current' }: Props) {
-
   const { dispatch, state } = useGame()
 
   const [answer, setAnswer] = useState('')
   const [error, setError] = useState<string | null>(null)
   // Escape-room cognition pressure (local only)
   const [attemptCount, setAttemptCount] = useState(0)
-  const [failurePatternHistory, setFailurePatternHistory] = useState<any[]>([])
-
-
+  const [failurePatternHistory, setFailurePatternHistory] = useState([] as Parameters<typeof evaluateAttempt>[4])
 
   const [isSolved, setIsSolved] = useState(false)
   const [hintRequested, setHintRequested] = useState(false)
@@ -32,7 +28,6 @@ export default function PuzzlePanel({ puzzle, onSolved, visibility = 'current' }
   const [hintLevel, setHintLevel] = useState<0 | 1 | 2>(0)
 
   const { loading, fetchHint, error: hintError } = useGroqHint()
-
 
   const displayedHint: string | null = hintRequested
     ? hintError
@@ -44,16 +39,13 @@ export default function PuzzlePanel({ puzzle, onSolved, visibility = 'current' }
           : puzzle.hintLayers.strongHint.trim()
     : null
 
-
-
-
-
-
   const phaseLabel = (() => {
-    const phaseValue = (puzzle as unknown as { phase?: string }).phase
+    type PuzzleWithPhase = Puzzle & { phase?: string }
+    const phaseValue = (puzzle as PuzzleWithPhase).phase
     const phase = typeof phaseValue === 'string' && phaseValue.trim().length ? phaseValue : 'DAWN'
     return phase.trim().toUpperCase()
   })()
+
 
 
   const narrativeTextById: Record<number, string> = {
