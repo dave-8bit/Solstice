@@ -105,8 +105,8 @@ export default function PuzzlePanel({ puzzle, onSolved, visibility = 'current' }
     },
     encryptedMessage: {
       color: '#00ff41',
-      wordBreak: 'break-word',
       overflowWrap: 'anywhere',
+      wordBreak: 'break-word',
       fontSize: '1.3rem',
       letterSpacing: '0.15em',
       fontFamily: "'Courier New', monospace",
