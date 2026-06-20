@@ -217,6 +217,7 @@ export default function PuzzlePanel({ puzzle, onSolved, visibility = 'current' }
 
 
   function onSubmit() {
+    console.log('[CLICK TEST] onSubmit fired')
 
     if (isSolved) return
     setError(null)
@@ -276,6 +277,7 @@ export default function PuzzlePanel({ puzzle, onSolved, visibility = 'current' }
 
 
   function onRequestHint() {
+    console.log('[CLICK TEST] onRequestHint fired')
     if (isSolved) return
 
     // Escape-room style escalation: weak(0) -> structural(1) -> strong(2)

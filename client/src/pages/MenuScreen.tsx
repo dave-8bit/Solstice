@@ -189,6 +189,7 @@ export default function MenuScreen() {
   }
 
   const onInitialize = () => {
+    console.log('[CLICK TEST] onInitialize fired')
     const trimmed = name.trim()
     if (!trimmed) return
 
