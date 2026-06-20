@@ -112,7 +112,6 @@ export default function PuzzlePanel({ puzzle, onSolved, visibility = 'current' }
       fontFamily: "'Courier New', monospace",
       textShadow: '0 0 10px rgba(0, 255, 65, 0.35)',
       marginBottom: '0.85rem',
-      wordBreak: 'break-word',
     },
     clueProminent: {
       color: '#ffb000',
