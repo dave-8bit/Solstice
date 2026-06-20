@@ -6,6 +6,7 @@ import { useGame } from '../context/GameContext'
 export default function MenuScreen() {
   const { dispatch } = useGame()
   const [name, setName] = useState('')
+  const [debugTap, setDebugTap] = useState(false)
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const rafRef = useRef<number | null>(null)
@@ -189,6 +190,7 @@ export default function MenuScreen() {
   }
 
   const onInitialize = () => {
+    setDebugTap(true)
     console.log('[CLICK TEST] onInitialize fired')
     const trimmed = name.trim()
     if (!trimmed) return
@@ -238,6 +240,12 @@ export default function MenuScreen() {
           }}
         > INITIALIZE SEQUENCE —
         </button>
+
+        {debugTap ? (
+          <div style={{ color: '#ffb000', fontFamily: "'Courier New', monospace", marginTop: '-0.25rem' }}>
+            BUTTON CLICK DETECTED
+          </div>
+        ) : null}
 
         <div style={styles.smallText}>
           One day. One chance. Determine your identity before shutdown.
