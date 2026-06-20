@@ -7,7 +7,11 @@ export default function MenuScreen() {
   // Temporary UI diagnostics (mobile tap tracing only)
   // DO NOT affect game logic.
 
-  const { dispatch } = useGame()
+  const { dispatch, state } = useGame()
+  const screenNow = state.screen
+  const sessionNow = state.sessionId
+
+
   const [name, setName] = useState('')
   const [debugTap, setDebugTap] = useState(false)
 
@@ -249,6 +253,21 @@ export default function MenuScreen() {
             BUTTON CLICK DETECTED
           </div>
         ) : null}
+
+        {/* Temporary visible diagnostics for state transition only */}
+        <div
+          style={{
+            color: '#008f11',
+            fontFamily: "'Courier New', monospace",
+            fontSize: 12,
+            marginTop: 8,
+          }}
+        >
+          MenuScreen sees state.screen=
+          {String(screenNow)} | sessionId=
+          {sessionNow ? 'present' : 'null'} | in localStorage? (check in GameContext persistence)
+        </div>
+
 
         <div style={styles.smallText}>
           One day. One chance. Determine your identity before shutdown.
