@@ -4,6 +4,9 @@ import { useEffect, useRef, useState } from 'react'
 import { useGame } from '../context/GameContext'
 
 export default function MenuScreen() {
+  // Temporary UI diagnostics (mobile tap tracing only)
+  // DO NOT affect game logic.
+
   const { dispatch } = useGame()
   const [name, setName] = useState('')
   const [debugTap, setDebugTap] = useState(false)
