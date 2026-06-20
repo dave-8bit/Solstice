@@ -67,6 +67,9 @@ export default function PuzzlePanel({ puzzle, onSolved, visibility = 'current' }
       padding: '1.2rem',
       borderRadius: '12px',
       boxSizing: 'border-box',
+      width: '100%',
+      maxWidth: '100%',
+      overflowX: 'hidden',
     },
     title: {
       color: '#ffb000',
