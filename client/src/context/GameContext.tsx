@@ -27,12 +27,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
   // Save only progression-relevant fields.
   // This must not change gameplay logic; it only hydrates on refresh.
   useEffect(() => {
+
     if (state.screen === 'boot' || state.screen === 'menu') {
       clearGamePersistence()
       return
     }
     persistGameProgress(state, puzzlesCount)
   }, [state, puzzlesCount])
+
 
   return <GameContext.Provider value={{ state, dispatch } as GameContextValue}>{children}</GameContext.Provider>
 }

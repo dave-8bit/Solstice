@@ -27,7 +27,7 @@ export default function App() {
         boxSizing: 'border-box',
       }}
     >
-      {/* Temporary visible diagnostics: current state.screen (mobile tracing only) */}
+      {/* Temporary visible diagnostics: current state.screen + last action (mobile tracing only) */}
       <div
         style={{
           position: 'fixed',
